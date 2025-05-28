@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { SubscriptionService } from '@/services/subscription_service';
-import { NewsletterNotificationRequest } from '@/models/subscription';
 
 interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -94,8 +93,7 @@ export class SubscriptionController {
       });
     }
   }
-  
-  static async sendNewsletterNotification(req: AuthenticatedRequest, res: Response): Promise<void> {
+    static async sendNewsletterNotification(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.userId || req.userRole !== 'admin') {
         res.status(403).json({
@@ -105,16 +103,15 @@ export class SubscriptionController {
         return;
       }
       
-      const { subject, timeFrame = 7 }: NewsletterNotificationRequest = req.body;
+      // Hardcoded values - no need for request body parameters
+      const timeFrame = 7; // Last 7 days of articles
+      const subject = 'Check Out Our Latest Football News!';
       
-      // Start the email sending process asynchronously
-      // We'll send a response immediately to the admin
       res.json({
         success: true,
         message: 'Newsletter notification process has been started'
       });
       
-      // Process in background
       SubscriptionService.sendNewsletterNotification(timeFrame, subject)
         .then(sentCount => {
           console.log(`Successfully sent ${sentCount} newsletter notifications`);

@@ -258,7 +258,7 @@ export class ArticleService {
 
             // Soft delete the article
             const result = await client.query(
-                'UPDATE articles SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL RETURNING id', 
+                'UPDATE articles SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL RETURNING id',
                 [id]
             );
 
@@ -318,5 +318,25 @@ export class ArticleService {
         const result = await pool.query(queryText, [limit]);
         return result.rows;
     }
-    
+
+    static async getRecentArticlesByTimeFrame(days: number = 7): Promise<Article[]> {
+        const queryText = `
+        SELECT 
+            a.*,
+            u.username as author_name,
+            c.name as category_name,
+            ARRAY_AGG(at.tag) FILTER (WHERE at.tag IS NOT NULL) as tags
+        FROM articles a
+        LEFT JOIN users u ON a.author_id = u.id
+        LEFT JOIN categories c ON a.category_id = c.id
+        LEFT JOIN article_tags at ON a.id = at.article_id
+        WHERE a.deleted_at IS NULL
+        AND a.published_date >= NOW() - INTERVAL '${days} days'
+        GROUP BY a.id, u.username, c.name
+        ORDER BY a.published_date DESC
+    `;
+
+        const result = await pool.query(queryText);
+        return result.rows;
+    }
 }

@@ -9,7 +9,3 @@ export interface SubscriptionRequest {
   user_id: string;
 }
 
-export interface NewsletterNotificationRequest {
-  subject?: string;
-  timeFrame?: number; // Number of days to look back for new articles
-}

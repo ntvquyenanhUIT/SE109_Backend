@@ -201,6 +201,10 @@ export class AuthenticationController {
       }
       
       const userData = req.body;
+      const file = req.file;
+    if (file) {
+      userData.profile_picture_url = `/uploads/images/${file.filename}`;
+    }
       const updatedUser = await AuthenticationService.updateUser(req.userId, userData);
       
       if (!updatedUser) {

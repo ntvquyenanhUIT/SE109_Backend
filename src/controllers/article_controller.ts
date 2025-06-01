@@ -70,7 +70,7 @@ export class ArticleController {
     static async createArticle(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
             const articleData: CreateArticleRequest = req.body;
-            
+
             if (!req.userId) {
                 res.status(401).json({
                     success: false,
@@ -105,38 +105,34 @@ export class ArticleController {
             });
         }
     }
-
     static async updateArticle(req: AuthenticatedRequest, res: Response): Promise<void> {
         try {
             const { id } = req.params;
             const updateData: UpdateArticleRequest = req.body;
-            
+            if (typeof updateData.tags === 'string') {
+                updateData.tags = updateData.tags.split(',').map(tag => tag.trim()).filter(Boolean);
+            }
+
+
             let newCoverImageUrl: string | undefined;
-            if (req.file) {
-                newCoverImageUrl = `/uploads/images/${req.file.filename}`;
+            if (req.file?.filename) {
+                newCoverImageUrl = `/uploads/images/${req?.file.filename}`;
             }
 
             const article = await ArticleService.updateArticle(id, updateData, newCoverImageUrl);
 
             if (!article) {
-                res.status(404).json({
-                    success: false,
-                    message: 'Article not found'
-                });
+                res.status(404).json({ success: false, message: 'Article not found' });
                 return;
             }
 
-            res.json({
-                success: true,
-                data: article,
-                message: 'Article updated successfully'
-            });
+            res.json({ success: true, data: article, message: 'Article updated successfully' });
         } catch (error) {
-            console.error('Error updating article:', error);
+            console.error('Error in updateArticle:', error);
             res.status(500).json({
                 success: false,
                 message: 'Failed to update article',
-                error: error instanceof Error ? error.message : 'Unknown error'
+                error: error instanceof Error ? error.message : 'Unknown error',
             });
         }
     }

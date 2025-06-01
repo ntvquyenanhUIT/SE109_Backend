@@ -11,7 +11,7 @@ export class AuthenticationController {
   static async register(req: Request, res: Response): Promise<void> {
     try {
       const userData: CreateUserRequest = req.body;
-      
+
       // Basic validation
       if (!userData.username || !userData.email || !userData.password) {
         res.status(400).json({
@@ -20,10 +20,10 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       const user = await AuthenticationService.registerUser(userData);
       const token = AuthenticationService.generateToken(user);
-      
+
       res.cookie('jwt_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -31,7 +31,7 @@ export class AuthenticationController {
         path: '/',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
-      
+
       const response: AuthResponse = {
         success: true,
         user: {
@@ -45,11 +45,11 @@ export class AuthenticationController {
         },
         message: 'User registered successfully'
       };
-      
+
       res.status(201).json(response);
     } catch (error) {
       console.error('Registration error:', error);
-      
+
       if (error instanceof Error && error.message.includes('duplicate key')) {
         if (error.message.includes('username')) {
           res.status(409).json({
@@ -69,7 +69,7 @@ export class AuthenticationController {
         }
         return;
       }
-      
+
       res.status(500).json({
         success: false,
         message: 'Failed to register user',
@@ -77,11 +77,11 @@ export class AuthenticationController {
       });
     }
   }
-  
+
   static async login(req: Request, res: Response): Promise<void> {
     try {
       const loginData: LoginRequest = req.body;
-      
+
       if (!loginData.email || !loginData.password) {
         res.status(400).json({
           success: false,
@@ -89,9 +89,9 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       const user = await AuthenticationService.loginUser(loginData);
-      
+
       if (!user) {
         res.status(401).json({
           success: false,
@@ -99,9 +99,9 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       const token = AuthenticationService.generateToken(user);
-      
+
       res.cookie('jwt_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -109,7 +109,7 @@ export class AuthenticationController {
         path: '/',
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
       });
-      
+
       const response: AuthResponse = {
         success: true,
         user: {
@@ -123,7 +123,7 @@ export class AuthenticationController {
         },
         message: 'Login successful'
       };
-      
+
       res.json(response);
     } catch (error) {
       console.error('Login error:', error);
@@ -134,7 +134,7 @@ export class AuthenticationController {
       });
     }
   }
-  
+
   static async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.userId) {
@@ -144,9 +144,9 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       const user = await AuthenticationService.getUserById(req.userId);
-      
+
       if (!user) {
         res.status(404).json({
           success: false,
@@ -154,7 +154,7 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       res.json({
         success: true,
         data: {
@@ -176,20 +176,20 @@ export class AuthenticationController {
       });
     }
   }
-  
+
   static async logout(_req: Request, res: Response): Promise<void> {
     res.clearCookie('jwt_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict'
     });
-    
+
     res.json({
       success: true,
       message: 'Logout successful'
     });
   }
-  
+
   static async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       if (!req.userId) {
@@ -199,10 +199,14 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       const userData = req.body;
+      const file = req.file;
+      if (file) {
+        userData.profile_picture_url = `/uploads/images/${file.filename}`;
+      }
       const updatedUser = await AuthenticationService.updateUser(req.userId, userData);
-      
+
       if (!updatedUser) {
         res.status(404).json({
           success: false,
@@ -210,7 +214,7 @@ export class AuthenticationController {
         });
         return;
       }
-      
+
       res.json({
         success: true,
         data: updatedUser,
